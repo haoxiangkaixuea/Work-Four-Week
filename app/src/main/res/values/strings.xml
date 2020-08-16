@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">WorkFourWeek</string>
+    <string name="commit">提交</string>
+    <string name="upload_pic">上传图片</string>
 </resources>
