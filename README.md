@@ -4,21 +4,59 @@
 
 ### okHttp使用
 
-###### 添加依赖
+添加依赖
 
 ```java
 implementation("com.squareup.okhttp3:okhttp:4.8.1")
 ```
 
+在AndroidManifest.xml加入网络权限
+
+```html
+<uses-permission android:name="android.permission.INTERNET" />
+```
+
 OkHttp框架的核心类是OkHttpClient，此类可直接实例化。由于OkHttpClient内部处理了并发，多线程和Socket重用等问题，为了节省资源，整个应用中使用一个OkHttpClient对象即可，可以对它做Singleton封装。
-
-
 
 ```java
 OkHttpClient okHttpClient = new OkHttpClient();
 ```
 
-######  Http请求的构建
+#####  Http请求的构建
+
+######  Http请求的发送
+
+请求的发送有两种形式，一种是直接同步执行，阻塞调用线程，直接返回结果；另一种是通过队列异步执行，不阻塞调用线程，通过回调方法返回结果。如下所示：
+
+同步执行：
+
+```java
+// 如果返回null，代表超时或没有网络连接
+Response response = client.newCall(request).execute();
+```
+
+异步回调：
+
+Response response = client.newCall(request).enqueue(new Callback() {
+
+```java
+
+    @Override
+    public void onFailure(Request request, IOException e) {
+        //超时或没有网络连接
+        //注意：这里是后台线程！
+    }
+    
+    @Override
+        public void onResponse(Response response) throws IOException {
+        //成功
+        //注意：这里是后台线程！
+    }
+
+});
+```
+
+###### GET请求
 
 代表Http请求的类是Request，该类使用构造器模式，最简单的构造GET请求如下：
 
@@ -27,6 +65,47 @@ Request request = new Request.Builder()
       .url(url)
       .build();
 ```
+
+具体方法如下：
+
+```java
+/**
+ * Http Get 请求
+ */
+private void httpGet() {
+    ///创建okHttpClient对象
+    OkHttpClient mOkHttpClient = new OkHttpClient();
+    //创建一个Request Request是OkHttp中访问的请求，Builder是辅助类。Response即OkHttp中的响应。
+    final Request request = new Request.Builder()
+            .url("http://ip.taobao.com/service/getIpInfo.php?ip=63.223.108.42")
+            .build();
+    //得到一个call对象
+    Call call = mOkHttpClient.newCall(request);
+    //请求加入调度
+    call.enqueue(new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+            //请求失败
+            Log.e("TAG", "请求失败");
+        }
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            //不是UI线程,请不要在此更新界面
+            String htmlStr = response.body().string();
+            Log.e("TAG", "htmlStr ==" + htmlStr);
+        }
+    });
+}
+```
+
+以上就是发送一个get请求的步骤，首先构造一个Request对象，参数最起码有个url，当然你可以通过Request.Builder设置更多的参数比如：header、method等。
+
+然后通过request的对象去构造得到一个Call对象，类似于将你的请求封装成了任务，既然是任务，就会有execute()和cancel()等方法。
+
+最后，以异步的方式去执行请求，所以我们调用的是call.enqueue，将call加入调度队列，然后等待任务执行完成，我们在Callback中即可得到结果。
+
+###### POST请求
 
 要构造Post请求，在构建Request时增加请求体即可：
 
@@ -42,39 +121,45 @@ Request request = new Request.Builder()
       .build();
 ```
 
-######  Http请求的发送
+具体方法：
 
-请求的发送有两种形式，一种是直接同步执行，阻塞调用线程，直接返回结果；另一种是通过队列异步执行，不阻塞调用线程，通过回调方法返回结果。如下所示：
+ ```java
+    /**
+     * Http Post请求
+     */
+    private void httpPost() {
+        OkHttpClient mOkHttpClient = new OkHttpClient();
+        RequestBody requestBody = new FormBody.Builder()
+                .add("ip", "63.223.108.42")
+                .build();
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url("http://ip.taobao.com/service/getIpInfo.php?")
+                .post(requestBody)
+                .build();
+        mOkHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                //请求失败
+                Log.e("TAG", "请求失败");
+            }
 
-同步执行：
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String htmlStr = response.body().string();
+                Log.e("TAG", "htmlStr ==" + htmlStr);
+            }
 
-```java
-// 如果返回null，代表超时或没有网络连接
-Response response = client.newCall(request).execute();
-```
-
-异步回调：
-
-```java
-Response response = client.newCall(request).enqueue(new Callback() {
-
-    @Override
-    public void onFailure(Request request, IOException e) {
-        //超时或没有网络连接
-        //注意：这里是后台线程！
+        });
     }
+ ```
 
-    @Override
-        public void onResponse(Response response) throws IOException {
-        //成功
-        //注意：这里是后台线程！
-    }
-});
-```
+使用Request的post方法来提交请求体RequestBody。
 
 ### Retrofit使用
 
 Retrofit 是一个 RESTful 的 HTTP 网络请求框架的封装，网络请求的工作本质上是 OkHttp 完成，而 Retrofit 仅负责 网络请求接口的封装
+
+在Android中使用Retrofit，我们只需要定义好Retrofit远程调用接口，在使用的时候定义Callback类就可以了，在Callback的onResponse回调方法中定义，请求成功后执行什么UI操作，在onFailure发法中定义请求失败后调用什么UI操作.
 
 使用步骤：
 
@@ -84,12 +169,10 @@ Retrofit 是一个 RESTful 的 HTTP 网络请求框架的封装，网络请求�
 implementation 'com.squareup.retrofit2:retrofit:2.0.2'
 ```
 
-后面三个是可选的，分别是数据解析器和gson，以及rxjava支持的依赖
-
 2.创建 用于描述网络请求 的接口
  Retrofit将 Http请求 抽象成 Java接口：采用 注解 描述网络请求参数 和配置网络请求参数
 
-```kotlin
+```java
 public interface GetRequest_Interface {
 
     @GET("openapi.do?keyfrom=abc&key=2032414398&type=data&doctype=json&version=1.1&q=car")
@@ -104,7 +187,9 @@ public interface GetRequest_Interface {
 
 3.创建Retrofit实例
 
-```cpp
+创建Retrofit实例和服务接口，在创建远程接口的时候必须要使用Retrofit接口来create接口的动态代理实例。Retrofit实例可以通过Builder去创建，在Builder过程中可以定义baseUrl，还可以定义json解析的工厂类，还可以定义RxJava的CallAdapter类，
+
+```java
   Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://fanyi.youdao.com/") //设置网络请求的Url地址
                 .addConverterFactory(GsonConverterFactory.create()) //设置数据解析器
@@ -133,7 +218,6 @@ public interface GetRequest_Interface {
                 System.out.println("连接失败");
             }
         });
-
           //同步请求
         try {
             Response<Reception> response = call.execute();
@@ -143,34 +227,118 @@ public interface GetRequest_Interface {
         }
 ```
 
-response.body()就是Reception对象，网络请求的完整 Url =在创建Retrofit实例时通过.baseUrl()设置 +网络请求接口的注解设置（下面称 “path“ ）
- 整合的规则如下：
-
-![img](https:////upload-images.jianshu.io/upload_images/14945598-a0a4695fb20a5ac8.png?imageMogr2/auto-orient/strip|imageView2/2/w/480/format/webp)
-
-URL整合规则.png
-
-注解
-
-上面我们用了@GET注解来发送Get请求，Retrofit还提供了很多其他的注解类型
-
-![img](https:////upload-images.jianshu.io/upload_images/14945598-65628d3f48c5a17d.png?imageMogr2/auto-orient/strip|imageView2/2/w/1144/format/webp)
-
-注解类型.png
+response.body()就是Reception对象，网络请求的完整 Url =在创建Retrofit实例时通过.baseUrl()设置 +网络请求接口的注解设置（称 “path“ ）
 
 ### 文件上传与下载
 
+上传文件：
 
+在AndroidManifest.xml加入读取设备外部存储空间和sdcard权限
 
+```html
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+```
 
+首先需要定义上传文件的类型，将sdcard根目录的test.txt文件上传到服务器：
 
+```java
+private void uploadMultiFile(String url, File file) {
+    RequestBody fileBody = RequestBody.create(MediaType.parse("image/*"), file);
+    RequestBody requestBody = new MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("file", file.getName(), fileBody)
+            .build();
+    Request request = new Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .build();
+    final okhttp3.OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder();
+    OkHttpClient okHttpClient = httpBuilder
+            //设置超时
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .writeTimeout(15, TimeUnit.SECONDS)
+            .build();
+}
+okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(okhttp3.Call call, IOException e) {
+               Toast.makeText(OkUpload.this,"上传失败",Toast.LENGTH_SHORT).show();
+            }
+            @Override
+            public void onResponse(okhttp3.Call call, Response response) throws IOException {
+                try {
+                    String jsonStr = response.body().string();
+                    Toast.makeText(OkUpload.this,"上传成功",Toast.LENGTH_SHORT).show();
+                    Log.i("EvaluateActivity", "uploadMultiFile() response=" + jsonStr);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+```
 
+最后需要获得请求权限
 
+```java
+/**
+ * 请求权限
+ */
+@Override
+public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    switch (requestCode) {
+        case 1:
+            if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "拒绝权限将无法使用程序", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+            break;
+        default:
+    }
+}
+```
 
+文件下载：
 
+在这里下载一张图片，我们得到Response后将流写进我们指定的图片文件中就可以了。
 
-
-
+```java
+ /**
+   * 下载文件
+   */
+       private void downAsynFile() {
+       OkHttpClient mOkHttpClient = new OkHttpClient();
+       String url = "https://www.baidu.com/img/bd_logo1.png";
+       Request request = new Request.Builder().url(url).build();
+   mOkHttpClient.newCall(request).enqueue(new Callback() {
+           @Override
+       public void onFailure(Call call, IOException e) {
+    
+           }
+            
+           @Override
+           public void onResponse(Call call, Response response) {
+               InputStream inputStream = response.body().byteStream();
+               FileOutputStream fileOutputStream = null;
+               try {
+                   fileOutputStream = new FileOutputStream(new File("/sdcard/baidu.png"));
+                   byte[] buffer = new byte[2048];
+                   int len = 0;
+                   while ((len = inputStream.read(buffer)) != -1) {
+                       fileOutputStream.write(buffer, 0, len);
+                   }
+                   fileOutputStream.flush();
+               } catch (IOException e) {
+               Log.e("TAG", "IOException");
+                   e.printStackTrace();
+               }
+            
+           Log.d("TAG", "文件下载成功");
+        }
+ 
+    });
+    }
+```
 
 ## git的使用
 
@@ -650,7 +818,7 @@ git commit -am "#提交内容"
 
 ### 冲突解决
 
-执行[Git](http://lib.csdn.net/base/git) merge ，如果有冲突，就会出现如下格式：
+执行Git merge ，如果有冲突，就会出现如下格式：
 
 ```bash
 <<<<<<< HEAD
@@ -662,16 +830,12 @@ git commit -am "#提交内容"
 这个位置的内容就是合并进来的分支的内容
 
 >>>>>>> branchName1
-```
+用下面的设置来改进冲突标记使其也显示（分支）共同祖先： 
 
-
-
-用下面的设置来改进冲突标记使其也显示（分支）共同祖先（感谢罗宾·斯托克和休·吉登斯）： 
 `git config --global merge.conflictstyle diff3`
 
-
-
 ||||||| merged common ancestors下面的内容就是双方改动前的内容
+```
 
 ### 多人开发协作
 
@@ -699,7 +863,6 @@ git commit -am "#提交内容"
 
 ```bash
 $ git branch
-* master
 ```
 
 master 分支前的 * 字符，它表示当前所在的分支。
@@ -708,7 +871,6 @@ master 分支前的 * 字符，它表示当前所在的分支。
 
 ```bash
 $ git branch -r
-  origin/master
 ```
 
 列出所有本地分支和远程分支：
@@ -721,7 +883,6 @@ $ git branch -a
 
 ```bash
 $ git checkout -b dev1 
-Switched to a new branch 'dev1'
 ```
 
 本地 master 分支默认就是远程 master 分支，上面命令在此基础上创建本地 dev1 分支，然后切换到 dev1 分支，相当于以下两条命令：
@@ -737,7 +898,6 @@ $ git checkout dev1
 
 ```bash
 $ git checkout -b dev1 origin/dev
-Switched to a new branch 'dev1'
 ```
 
 开发提交
@@ -754,8 +914,6 @@ commit 信息
 
 ```bash
 $ git commit -m "branch test"
-[dev1 8643ecb] branch dev1
-2 files changed, 3 insertions(+)
 ```
 
 合并到本地 master 分支
@@ -764,17 +922,12 @@ $ git commit -m "branch test"
 
 ```bash
 $ git checkout master
-Switched to branch 'master'
 ```
 
 进行本地分支 dev1 合并：
 
 ```bash
 $ git merge dev1
-Updating 82951ea..444bb8e
-Fast-forward
- README.md | 1 +
- 1 file changed, 1 insertion(+)
 ```
 
 Fast-forward 信息，“快进模式”合并，这种模式下，删除分支后，会丢掉分支信息，可以用 --no-ff 方式进行 merge ：
@@ -801,7 +954,6 @@ $ git branch -d dev1
 
 ```bash
 $ git branch -D dev1
-Deleted branch dev1 (was d39f6c3).
 ```
 
 创建远程分支 dev
@@ -832,14 +984,12 @@ git push origin master:master
 
 ```bash
 $ git branch -u origin/dev master
-Branch master set up to track remote branch dev from origin.
 ```
 
 或者：
 
 ```bash
 $ git branch --set-upstream-to origin/dev master
-Branch master set up to track remote branch dev from origin.
 ```
 
 指定本地 master 分支追踪远程 dev 分支。
@@ -848,34 +998,22 @@ Branch master set up to track remote branch dev from origin.
 
 ```bash
 $ git branch -vv
-* master 444bb8e [origin/dev] branch test
 ```
 
 合并远程分支
 
-我们把远程分支 dev 合并到 master，怎么做？
+把远程分支 dev 合并到 master：
 
 1、指定本地 master 分支追踪远程 dev 分支
 
 ```bash
 $ git branch -u origin/dev master
-Branch master set up to track remote branch dev from origin.
 ```
 
 2、更新内容
 
 ```bash
 $ git pull
-remote: Counting objects: 3, done.
-remote: Compressing objects: 100% (3/3), done.
-remote: Total 3 (delta 1), reused 0 (delta 0), pack-reused 0
-Unpacking objects: 100% (3/3), done.
-From https://github.com/WuXiaolong/GitBranchSample
-   0138684..d0ca159  dev        -> origin/dev
-Updating 0138684..d0ca159
-Fast-forward
- README.md | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 ```
 
 3、开发提交远程分支 dev
@@ -892,36 +1030,24 @@ commit 信息
 
 ```bash
 $ git commit -m "merge origin/dev"
-[master 44150b4] merge origin/dev
- 1 file changed, 1 insertion(+), 1 deletion(-)
 ```
 
 进行 push
 
 ```bash
 $ git push origin master:dev
-Counting objects: 3, done.
-Delta compression using up to 4 threads.
-Compressing objects: 100% (2/2), done.
-Writing objects: 100% (3/3), 310 bytes | 0 bytes/s, done.
-Total 3 (delta 1), reused 0 (delta 0)
-remote: Resolving deltas: 100% (1/1), completed with 1 local object.
-To https://github.com/WuXiaolong/GitBranchSample.git
-   d0ca159..44150b4  master -> dev
 ```
 
 4、指定本地 master 分支追踪远程 master 分支
 
 ```bash
 $ git branch -u origin/master master
-Branch master set up to track remote branch master from origin.
 ```
 
 5、更新内容
 
 ```bash
 $ git pull
-Already up-to-date.
 ```
 
 6、同样提交远程分支 master
@@ -930,9 +1056,6 @@ Already up-to-date.
 
 ```bash
 $ git push origin master
-Total 0 (delta 0), reused 0 (delta 0)
-To https://github.com/WuXiaolong/GitBranchSample.git
-   0138684..44150b4  master -> master
 ```
 
 PS：以上远程分支合并，我不知道是不是正确的方式，望指导。
@@ -973,17 +1096,13 @@ $ git push origin :dev
 
    feature分支根据项目实际情况，分为以下两种：
 
-   (1)
-
-   此类分支的特点是开发周期短、功能特定新强；
+   (1)：此类分支的特点是开发周期短、功能特定新强；
 
    feature分支开发完毕后，合入develop分支；
 
    develop分支测试完毕，合入master主分支后，删除feature分支；
 
-   (2)
-
-   此类分支的特点是开发周期长，一般与develop分支处于并行关系；
+   (2)：此类分支的特点是开发周期长，一般与develop分支处于并行关系；
 
    feature分支功能与develop分支同步，但是自身有特定的功能；
 
@@ -1071,7 +1190,7 @@ HTTP1.0最早在网页中使用是在1996年，那个时候只是使用一些较
 - **header压缩**，如上文中所言，对前面提到过HTTP1.x的header带有大量信息，而且每次都要重复发送，HTTP2.0使用encoder来减少需要传输的header大小，通讯双方各自cache一份header fields表，既避免了重复header的传输，又减小了需要传输的大小。
 - **服务端推送**（server push），同SPDY一样，HTTP2.0也具有server push功能。
 
-**HTTP2.0的多路复用和HTTP1.X中的长连接复用有什么区别？**
+**HTTP2.0的多路复用和HTTP1.X中的长连接复用的区别**
 
 - HTTP/1.* 一次请求-响应，建立一个连接，用完关闭；每一个请求都要建立一个连接；
 - HTTP/1.1 Pipeling解决方式为，若干个请求排队串行化单线程处理，后面的请求等待前面请求的返回才能获得执行机会，一旦有某请求超时等，后续请求只能被阻塞，毫无办法，也就是人们常说的线头阻塞；
@@ -1088,9 +1207,21 @@ HTTP1.0最早在网页中使用是在1996年，那个时候只是使用一些较
 ### 网络七层
 
 OSI七层模型
- OSI七层协议模型主要是：应用层（Application）、表示层（Presentation）、会话层（Session）、传输层（Transport）、网络层（Network）、数据链路层（Data Link）、物理层（Physical）。
+ OSI七层协议模型主要是：
 
+应用层（Application）
 
+表示层（Presentation）
+
+会话层（Session）
+
+传输层（Transport）
+
+网络层（Network）
+
+数据链路层（Data Link）
+
+物理层（Physical）
 
 ### 什么是HTTP协议
 
@@ -1119,29 +1250,39 @@ Http协议永远是客户端发起，服务器端响应
 1. 将Android手机与电脑USB相连，打开windows命令提示符窗口
 2. 将tcpdump程序copy至android手机（该命令前面那个目录文件为本地地址，后面那个目录为目的手机端地址）
 
+```bash
 C:\android-sdk-windows\platform-tools>adb push c:/tcpdump /data/local/tcpdump
+```
 
 3. 修改tcpdump的权限
 
+```bash
 C:\android-sdk-windows\platform-tools>adb shell
 
 chmod 777 /data/local/tcpdump
+```
 
 4. 进入root权限
 
+```bash
 C:\android-sdk-windows\platform-tools>adb shell
  $ su
+```
 
 在运行su指令后，手机终端桌面会出现相应提示信息以确认您对root操作的认可。
 
 5. 运行tcpdump，输入以下命令启动抓包。
 
+```bash
 /data/local/tcpdump -p -vv -s 0 -w /sdcard/capture.pcap
+```
 
 6. 在手机端执行相应需要进行抓包分析的操作，执行完成后在命令提示符窗口执行Ctrl+C中断抓包进程
 7. 将抓包结果复制至本地（前面那个目录为手机端地址，后面那个目录为本地地址）
 
+```bash
 C:\android-sdk-windows\platform-tools>adb pull /sdcard/capture.pcap c:/
+```
 
 8. 使用Wireshark等工具查看抓包文件capture.pcap
 
@@ -1229,13 +1370,13 @@ Wireshark很强大，但是它在解析SSL层加密过的信息时，需要配�
 
 ### 手机抓包原理
 
-抓包的基本原理就是中间人攻击 [HTTPS 的握手过程](https://www.jianshu.com/p/43c0f5b90562)。Mac 上可使用 [Charles](https://links.jianshu.com/go?to=https%3A%2F%2Fwww.charlesproxy.com%2F) 进行抓包。本质上就是两段 HTTPS 连接，Client <--> Man-In-The-Middle 和 Man-In-The-Middle <--> Server。使用 Charles 进行抓包，需要 Client 端提前将 Charles 的根证书添加在 Client 的信任列表中
+抓包的基本原理就是中间人攻击 [HTTPS 的握手过程]。Mac 上可使用 [Charles] 进行抓包。本质上就是两段 HTTPS 连接，Client <--> Man-In-The-Middle 和 Man-In-The-Middle <--> Server。使用 Charles 进行抓包，需要 Client 端提前将 Charles 的根证书添加在 Client 的信任列表中
 
 ### 中间人攻击危害
 
-**HTTPS**，是一种[网络安全](https://link.jianshu.com?t=https://zh.wikipedia.org/wiki/網絡安全)传输协议，利用[SSL/TLS](https://link.jianshu.com?t=https://zh.wikipedia.org/wiki/传输层安全)来对数据包进行加密,以提供对[网络](https://link.jianshu.com?t=https://zh.wikipedia.org/wiki/網路)服务器的[身份认证](https://link.jianshu.com?t=https://zh.wikipedia.org/wiki/身份验证)，保护交换数据的隐私与[完整性](https://link.jianshu.com?t=https://zh.wikipedia.org/wiki/完整性)。
+**HTTPS**，是一种[网络安全]传输协议，利用[SSL/TLS]来对数据包进行加密,以提供对[网络]服务器的[身份认证]，保护交换数据的隐私与[完整性]
 
-**中间人攻击**，Man-in-the-middle attack，[缩写](https://link.jianshu.com?t=https://zh.wikipedia.org/wiki/縮寫)：MITM，是指攻击者与通讯的两端分别创建独立的联系，并交换其所收到的数据，使通讯的两端认为他们正在通过一个私密的连接与对方直接对话，但事实上整个会话都被攻击者完全控制。
+**中间人攻击**，Man-in-the-middle attack，[缩写]：MITM，是指攻击者与通讯的两端分别创建独立的联系，并交换其所收到的数据，使通讯的两端认为他们正在通过一个私密的连接与对方直接对话，但事实上整个会话都被攻击者完全控制。
 
 https在理论上是可以抵御MITM，但是由于开发过程中的编码不规范，导致https可能存在MITM攻击风险，攻击者可以解密、篡改https数据。
 
@@ -1243,33 +1384,13 @@ https在理论上是可以抵御MITM，但是由于开发过程中的编码不�
 
 Android https的开发过程中常见的安全缺陷:
 
-1)在自定义实现X509TrustManager时，checkServerTrusted中没有检查证书是否可信，导致通信过程中可能存在中间人攻击，造成敏感数据劫持危害。
+1)、在自定义实现X509TrustManager时，checkServerTrusted中没有检查证书是否可信，导致通信过程中可能存在中间人攻击，造成敏感数据劫持危害。
 
-2)在重写WebViewClient的onReceivedSslError方法时，调用proceed忽略证书验证错误信息继续加载页面，导致通信过程中可能存在中间人攻击，造成敏感数据劫持危害。
+2)、在重写WebViewClient的onReceivedSslError方法时，调用proceed忽略证书验证错误信息继续加载页面，导致通信过程中可能存在中间人攻击，造成敏感数据劫持危害。
 
-3)在自定义实现HostnameVerifier时，没有在verify中进行严格证书校验，导致通信过程中可能存在中间人攻击，造成敏感数据劫持危害。
+3)、在自定义实现HostnameVerifier时，没有在verify中进行严格证书校验，导致通信过程中可能存在中间人攻击，造成敏感数据劫持危害。
 
-4)在setHostnameVerifier方法中使用ALLOW_ALL_HOSTNAME_VERIFIER，信任所有Hostname，导致通信过程中可能存在中间人攻击，造成敏感数据劫持危害。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+4)、在setHostnameVerifier方法中使用ALLOW_ALL_HOSTNAME_VERIFIER，信任所有Hostname，导致通信过程中可能存在中间人攻击，造成敏感数据劫持危害。
 
 ## 错误记录
 
@@ -1277,7 +1398,7 @@ startForeground requires android.permission.FOREGROUND_SERVICE
 
 解决方案：
 
-```java
+```xml
 <manifest ...>
  <uses-permission
  android:name="android.permission.FOREGROUND_SERVICE" />
@@ -1291,8 +1412,6 @@ CLEARTEXT communication to * not permitted by network
 
 在res目录下新建xml文件夹，文件夹里面创建network_security_config.xml 文件；
  文件内容
-
-
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
