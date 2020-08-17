@@ -307,10 +307,6 @@ public class OkUpload extends AppCompatActivity implements View.OnClickListener 
 
     /**
      * 请求权限
-     *
-     * @param requestCode
-     * @param permissions
-     * @param grantResults
      */
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {

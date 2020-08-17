@@ -9,13 +9,14 @@
     <!--底部按钮，默认的按钮样式 -->
     <style name="bt_common">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">@dimen/d_80</item>
-        <item name="android:layout_marginLeft">@dimen/d_40</item>
-        <item name="android:layout_marginRight">@dimen/d_40</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginLeft">@dimen/d_32</item>
+        <item name="android:layout_marginRight">@dimen/d_32</item>
         <item name="android:layout_marginTop">@dimen/d_40</item>
         <item name="android:layout_marginBottom">@dimen/d_40</item>
-        <item name="android:background">@drawable/shape_combt_bg</item>
-        <item name="android:textColor">@color/white</item>
-        <item name="android:textSize">@dimen/d_36</item>
+        <item name="android:focusable">true</item>
+        <item name="android:background">@drawable/button_img</item>
+        <item name="android:textColor">@color/red</item>
+        <item name="android:textSize">@dimen/d_48</item>
     </style>
 </resources>

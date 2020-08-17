@@ -361,4 +361,5 @@
     <dimen name="d_840">420dp</dimen>
     <dimen name="d_866">433dp</dimen>
     <dimen name="d_1000">500dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
 </resources>

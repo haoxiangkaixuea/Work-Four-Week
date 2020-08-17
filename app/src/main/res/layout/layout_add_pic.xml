@@ -3,7 +3,7 @@
     android:id="@+id/ll_add"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@color/divide_ee"
+    android:background="@color/main_sel"
     android:gravity="center"
     android:orientation="vertical">
 
