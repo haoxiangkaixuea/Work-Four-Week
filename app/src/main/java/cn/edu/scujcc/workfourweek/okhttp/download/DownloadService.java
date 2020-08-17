@@ -73,6 +73,9 @@ public class DownloadService extends Service {
         @Override
         public void onPaused() {
             mDownloadTask = null;
+            //开启前台服务，通知栏中该通知也会变为不会随着点击或者滑动而删除。除非该service结束停止，这个通知也会随之被删除。
+            //这个是结束前台的服务，通知栏中该通知会随着点击或者滑动而删除。参数是：是否删除之前发送的通知，
+            // true：删除。false：不删除 （用手滑动或者点击通知会被删除）
             stopForeground(true);
             Toast.makeText(DownloadService.this, "paused", Toast.LENGTH_SHORT)
                     .show();
@@ -86,9 +89,6 @@ public class DownloadService extends Service {
                     .show();
         }
     };
-
-    public DownloadService() {
-    }
 
     private Notification getNotification(String title, int progress, Intent intent) {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
@@ -177,6 +177,7 @@ public class DownloadService extends Service {
                 if (downloadUrl != null) {
                     // 取消下载时，删除下载文件，关闭前台通知
                     String fileName = downloadUrl.substring(downloadUrl.lastIndexOf("/"));
+                    File files=getExternalFilesDir(null);
                     String directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath();
                     File file = new File(directory, fileName);
                     if (file.exists()) {

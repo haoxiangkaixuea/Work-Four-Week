@@ -65,8 +65,7 @@ public class RetrofitDownload extends AppCompatActivity {
                     @Override
                     public void onFinish(final File file) {
                         download.setEnabled(true);
-                        tvFileLocation.setText(getResources().getString(R.string.download_address) + "\n"
-                                + file.getAbsolutePath());
+                        tvFileLocation.setText(getResources().getString(R.string.download_address) + "\n"+ file.getAbsolutePath());
                         installAPK(file, RetrofitDownload.this);
                     }
 

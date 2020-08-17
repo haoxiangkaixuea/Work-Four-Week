@@ -1,4 +1,4 @@
-package cn.edu.scujcc.workfourweek.okhttp.download;
+package cn.edu.scujcc.workfourweek.Utils;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.provider.Settings;
 
 import cn.edu.scujcc.workfourweek.R;
+import cn.edu.scujcc.workfourweek.okhttp.download.OkHttpDownload;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 

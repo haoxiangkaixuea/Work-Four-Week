@@ -1,5 +1,7 @@
 package cn.edu.scujcc.workfourweek.okhttp.download;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,10 +30,11 @@ public class OkHttpUtil {
                             .cookieJar(new CookieJar() {
 
                                 @Override
-                                public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
+                                public void saveFromResponse(@NotNull HttpUrl url, @NotNull List<Cookie> cookies) {
                                     cookieStore.put(url.host(), cookies);
                                 }
 
+                                @NotNull
                                 @Override
                                 public List<Cookie> loadForRequest(HttpUrl url) {
                                     List<Cookie> cookies = cookieStore.get(url.host());

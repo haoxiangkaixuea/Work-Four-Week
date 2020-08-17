@@ -10,7 +10,7 @@ import retrofit2.http.Url;
  * @author Administrator
  */
 
-public interface DownloadService {
+public interface DownloadCall {
     @Streaming
     @GET
     Call<ResponseBody> downloadWithDynamicUrl(@Url String fileUrl);

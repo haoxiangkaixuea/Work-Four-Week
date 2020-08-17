@@ -38,7 +38,7 @@ public class DownloadUtil {
     /**
      * download file and show the progress
      *
-     * @param listener
+     * @param listener 下载监听
      */
     public void downloadFile(InputParameter inputParam, final DownloadListener listener) {
 
@@ -51,21 +51,23 @@ public class DownloadUtil {
                     .retryOnConnectionFailure(true)
                     .connectTimeout(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
         }
-        final DownloadService api = new Retrofit.Builder()
+        final DownloadCall api = new Retrofit.Builder()
                 .baseUrl(inputParam.getBaseUrl())
                 .client(mBuilder.build())
                 .build()
-                .create(DownloadService.class);
+                .create(DownloadCall.class);
 
         mExecutorService.execute(() -> {
             try {
                 Response<ResponseBody> result = api.downloadWithDynamicUrl(inputParam.getRelativeUrl()).execute();
-                File file = FileUtil.writeFile(inputParam.getLoadedFilePath(), result.body().byteStream());
-                if (listener != null) {
-                    if (inputParam.isCallbackOnUiThread()) {
-                        uiExecutor.execute(() -> listener.onFinish(file));
-                    } else {
-                        listener.onFinish(file);
+                if (result.body() != null) {
+                    File file = FileUtil.writeFile(inputParam.getLoadedFilePath(), result.body().byteStream());
+                    if (listener != null) {
+                        if (inputParam.isCallbackOnUiThread()) {
+                            uiExecutor.execute(() -> listener.onFinish(file));
+                        } else {
+                            listener.onFinish(file);
+                        }
                     }
                 }
             } catch (Exception e) {

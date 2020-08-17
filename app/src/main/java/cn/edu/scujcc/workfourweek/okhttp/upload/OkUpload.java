@@ -26,8 +26,12 @@ import com.luck.picture.lib.config.PictureMimeType;
 import com.luck.picture.lib.entity.LocalMedia;
 import com.nex3z.flowlayout.FlowLayout;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -98,7 +102,6 @@ public class OkUpload extends AppCompatActivity implements View.OnClickListener 
             case R.id.ll_add:
                 goSelectPic();
                 break;
-
             default:
                 break;
         }
@@ -117,7 +120,7 @@ public class OkUpload extends AppCompatActivity implements View.OnClickListener 
                 files.add(file);
             }
             //这里是后台地址
-            String filesUrl = "/LitePalData/";
+            String filesUrl = "/passPayShop/image/";
             uploadMultiFiles(filesUrl, files);
         } else {
             Toast.makeText(this, "请选择图片再上传", Toast.LENGTH_SHORT).show();
@@ -138,13 +141,29 @@ public class OkUpload extends AppCompatActivity implements View.OnClickListener 
                 .post(requestBody)
                 .build();
 
-
         final okhttp3.OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder();
         OkHttpClient okHttpClient = httpBuilder
                 //设置超时
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(15, TimeUnit.SECONDS)
                 .build();
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(okhttp3.Call call, IOException e) {
+                Toast.makeText(OkUpload.this, "上传失败", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onResponse(okhttp3.Call call, Response response) throws IOException {
+                try {
+                    String jsonStr = response.body().string();
+                    Toast.makeText(OkUpload.this, "上传成功", Toast.LENGTH_SHORT).show();
+                    Log.i("EvaluateActivity", "uploadMultiFile() response=" + jsonStr);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     /**
@@ -173,13 +192,14 @@ public class OkUpload extends AppCompatActivity implements View.OnClickListener 
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(okhttp3.Call call, IOException e) {
-
+                Toast.makeText(OkUpload.this, "上传失败", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onResponse(okhttp3.Call call, Response response) throws IOException {
                 try {
                     String jsonStr = response.body().string();
+                    Toast.makeText(OkUpload.this, "上传成功", Toast.LENGTH_SHORT).show();
                     Log.i("EvaluateActivity", "uploadMultiFile() response=" + jsonStr);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -231,35 +251,17 @@ public class OkUpload extends AppCompatActivity implements View.OnClickListener 
                 .enableCrop(false)
                 // 是否压缩 true or false
                 .compress(true)
-                // int glide 加载宽高，越小图片列表越流畅，但会影响列表图片浏览的清晰度
                 .glideOverride(160, 160)
-                // .withAspectRatio()// int 裁剪比例 如16:9 3:2 3:4 1:1 可自定义
-                // .hideBottomControls()// 是否显示uCrop工具栏，默认不显示 true or false
-                // .isGif()// 是否显示gif图片 true or false
                 //压缩图片保存地址
                 .compressSavePath(getPath())
-                //.freeStyleCropEnabled(true)// 裁剪框是否可拖拽 true or false
-                // .circleDimmedLayer(false)// 是否圆形裁剪 true or false
-                //.showCropFrame(true)// 是否显示裁剪矩形边框 圆形裁剪时建议设为false   true or false
-                //  .showCropGrid(true)// 是否显示裁剪矩形网格 圆形裁剪时建议设为false    true or false
-                // .openClickSound(false)// 是否开启点击声音 true or false
                 // 是否传入已选图片 List<LocalMedia> list
                 .selectionMedia(selectList)
                 // 预览图片时 是否增强左右滑动图片体验(图片滑动一半即可看到上一张是否选中) true or false
                 .previewEggs(true)
-                // .cropCompressQuality()// 裁剪压缩质量 默认90 int
                 // 小于100kb的图片不压缩
                 .minimumCompressSize(100)
                 //同步true或异步false 压缩 默认同步
                 .synOrAsy(true)
-                // .cropWH()// 裁剪宽高比，设置如果大于图片本身宽高则无效 int
-                //.rotateEnabled() // 裁剪是否可旋转图片 true or false
-                // .scaleEnabled()// 裁剪是否可放大缩小图片 true or false
-                // .videoQuality()// 视频录制质量 0 or 1 int
-                // .videoMaxSecond(15)// 显示多少秒以内的视频or音频也可适用 int
-                // .videoMinSecond(10)// 显示多少秒以内的视频or音频也可适用 int
-                // .recordVideoSecond()//视频秒数录制 默认60s int
-                // .isDragFrame(true)// 是否可拖动裁剪框(固定)
                 //结果回调onActivityResult code
                 .forResult(PictureConfig.CHOOSE_REQUEST);
     }
@@ -274,16 +276,10 @@ public class OkUpload extends AppCompatActivity implements View.OnClickListener 
                     // 图片选择结果回调
                     selectList.clear();
                     selectList.addAll(PictureSelector.obtainMultipleResult(data));
-
-                    // 例如 LocalMedia 里面返回三种path
-                    // 1.media.getPath(); 为原图path
-                    // 2.media.getCutPath();为裁剪后path，需判断media.isCut();是否为true
-                    // 3.media.getCompressPath();为压缩后path，需判断media.isCompressed();是否为true
                     // 如果裁剪并压缩了，已取压缩路径为准，因为是先裁剪后压缩的
-
                     for (int i = 0; i < selectList.size(); i++) {
                         LocalMedia media = selectList.get(i);
-                        Log.i("图片", media.getPath());
+                        Log.d("图片", media.getPath());
                         ImageView imageView = new ImageView(this);
                         flContent.addView(imageView);
                         ViewGroup.LayoutParams layoutParams = imageView.getLayoutParams();
@@ -324,9 +320,10 @@ public class OkUpload extends AppCompatActivity implements View.OnClickListener 
     /**
      * 自定义压缩存储地址
      *
-     * @return
+     * @return 保存路径
      */
     private String getPath() {
+       // File eFile=getExternalFilesDir(null);
         String path = Environment.getExternalStorageDirectory() + "/passPayShop/image/";
         File file = new File(path);
         if (file.mkdirs()) {
