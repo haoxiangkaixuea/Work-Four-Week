@@ -8,6 +8,7 @@ import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 
 import cn.edu.scujcc.workfourweek.okhttp.upload.OkUpload;
+import cn.edu.scujcc.workfourweek.retrofit.download.RetrofitDownload;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private Button okUpload;
@@ -39,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(okUpload);
                 break;
             case R.id.ok_download:
-                Intent okDownload = new Intent(this, OkUpload.class);
+                Intent okDownload = new Intent(this, RetrofitDownload.class);
                 startActivity(okDownload);
                 break;
             case R.id.retrofit_upload:

@@ -19,6 +19,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
@@ -28,13 +32,11 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     //瀑布流布局
     implementation 'com.nex3z:flow-layout:1.0.0'
     //图片选择
     implementation 'com.github.LuckSiege.PictureSelector:picture_library:v2.2.2'
-    //okhttp
     implementation 'com.squareup.okhttp3:okhttp:4.8.1'
-    //gson
     implementation 'com.google.code.gson:gson:2.8.5'
 }

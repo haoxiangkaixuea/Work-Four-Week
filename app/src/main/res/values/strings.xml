@@ -2,4 +2,9 @@
     <string name="app_name">WorkFourWeek</string>
     <string name="commit">提交</string>
     <string name="upload_pic">上传图片</string>
+    <string name="download_address">下载的文件地址为:</string>
+    <string name="download_progress">文件文件下载进度：</string>
+    <string name="download_pass">已下载:</string>
+    <string name="download_length">总长:</string>
+    <string name="accredit">请授予存储权限</string>
 </resources>
