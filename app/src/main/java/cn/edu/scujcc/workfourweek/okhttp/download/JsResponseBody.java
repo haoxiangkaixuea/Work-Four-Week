@@ -75,7 +75,7 @@ public class JsResponseBody extends ResponseBody {
     }
 
     public interface JsDownLoadListener {
-        void onProgress(int percent, long downloaded, long contentLenth);
+        void onProgress(int percent, long downloaded, long contentLength);
     }
 
 }

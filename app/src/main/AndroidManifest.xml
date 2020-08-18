@@ -6,9 +6,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!--安装外部程序-->
+    <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- 安装外部程序 -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <dist:module dist:instant="true" />
 
     <application
@@ -16,10 +16,11 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:networkSecurityConfig="@xml/network_security_config"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:requestLegacyExternalStorage="true"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".okhttp.upload.LoginOk"></activity>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -40,7 +41,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/rc_file_path" />
         </provider>
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="cn.edu.scujcc.workfourweek.file_provider"
@@ -58,7 +58,6 @@
         <service
             android:name=".okhttp.download.MyIntentService"
             android:exported="false" />
-
     </application>
 
 </manifest>

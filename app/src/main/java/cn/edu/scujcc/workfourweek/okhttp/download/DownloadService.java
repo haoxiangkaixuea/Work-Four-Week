@@ -165,7 +165,7 @@ public class DownloadService extends Service {
 
         public void pauseDownload() {
             // if (mDownloadTask!=null){
-            //  mDownloadTask.pauseDowload();
+            //  mDownloadTask.pauseDownload();
             // }
         }
 

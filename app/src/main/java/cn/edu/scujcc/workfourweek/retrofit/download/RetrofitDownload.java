@@ -66,7 +66,7 @@ public class RetrofitDownload extends AppCompatActivity {
                     public void onFinish(final File file) {
                         download.setEnabled(true);
                         tvFileLocation.setText(getResources().getString(R.string.download_address) + "\n"+ file.getAbsolutePath());
-                        installAPK(file, RetrofitDownload.this);
+                        installApk(file, RetrofitDownload.this);
                     }
 
                     @Override
@@ -100,7 +100,7 @@ public class RetrofitDownload extends AppCompatActivity {
         }
     }
 
-    public void installAPK(File file, Activity mAct) {
+    public void installApk(File file, Activity mAct) {
         if (file == null) {
             return;
         }

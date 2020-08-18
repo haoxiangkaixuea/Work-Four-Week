@@ -1,5 +1,8 @@
 package cn.edu.scujcc.workfourweek.retrofit.download;
 
+/**
+ * @author Administrator
+ */
 public class InputParameter {
     private final String baseUrl;
     private final String relativeUrl;
